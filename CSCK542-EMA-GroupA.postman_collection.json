@@ -1,0 +1,339 @@
+{
+	"info": {
+		"_postman_id": "a68a8385-b95c-4c5d-a95b-38a1d013b293",
+		"name": "CSCK542-EMA-GroupA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sessions",
+			"item": [
+				{
+					"name": "Login user - Create session",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"morgan@example.com\",\r\n    \"password\": \"123pass456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_HOST}}/sessions",
+							"host": [
+								"{{BASE_HOST}}"
+							],
+							"path": [
+								"sessions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user - Delete session",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_HOST}}/sessions",
+							"host": [
+								"{{BASE_HOST}}"
+							],
+							"path": [
+								"sessions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Session Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_HOST}}/sessions",
+							"host": [
+								"{{BASE_HOST}}"
+							],
+							"path": [
+								"sessions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Courses",
+			"item": [
+				{
+					"name": "Teacher only",
+					"item": [
+						{
+							"name": "Set marks for a course of student Copy",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"marks\": 1.545\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/students/{{studentUserID}}/marks",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"{{courseID}}",
+										"students",
+										"{{studentUserID}}",
+										"marks"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin only",
+					"item": [
+						{
+							"name": "Assign teacher to a course",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"user_id\": 8\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/assign",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"{{courseID}}",
+										"assign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Unassign teacher to a course",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"user_id\": 5\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/unassign",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"{{courseID}}",
+										"unassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Enable course",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/5/enable",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"5",
+										"enable"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Disable course",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/5/disable",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"5",
+										"disable"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create new course",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Math course\",\r\n    \"enabled\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_HOST}}/courses",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Student Only",
+					"item": [
+						{
+							"name": "Enroll in course for logged in student",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/enroll",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"{{courseID}}",
+										"enroll"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Withdraw from course for logged in student",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/withdraw",
+									"host": [
+										"{{BASE_HOST}}"
+									],
+									"path": [
+										"courses",
+										"{{courseID}}",
+										"withdraw"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "List all courses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_HOST}}/courses",
+							"host": [
+								"{{BASE_HOST}}"
+							],
+							"path": [
+								"courses"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_HOST",
+			"value": "http://127.0.0.1:3000",
+			"type": "default"
+		},
+		{
+			"key": "studentUserID",
+			"value": "27"
+		},
+		{
+			"key": "courseID",
+			"value": "2"
+		},
+		{
+			"key": "teacherUserID",
+			"value": "8",
+			"type": "default"
+		}
+	]
+}
