@@ -19,14 +19,13 @@ createCourseHandler = async (req, res) => {
   let courseData = {
     id: undefined,
     name: req.body.name,
-    enabled: req.body.enabled,
     created_by_user_id: req.userSession.user.id,
     created_at: Date.now()
   }
   try {
     let [result] = await dbPool.execute(
       'INSERT INTO `courses` (`name`, `enabled`, `created_by_user_id`, `created_at`) VALUES (?, ?, ?, ?)',
-      [courseData.name, courseData.enabled, courseData.created_by_user_id, courseData.created_at]
+      [courseData.name, false, courseData.created_by_user_id, courseData.created_at]
     );
 
     // console.log(result)
@@ -42,15 +41,13 @@ createCourseHandler = async (req, res) => {
 
 }
 
-
+// NOT REQUIRED but complete it if we have time
 getCourseHandler = async (req, res) => {
-
   res.json('yolo')
 }
 
 // NOT REQUIRED but complete it if we have time
 updateCourseHandler = async (req, res) => {
-
 }
 
 
@@ -58,12 +55,13 @@ listCoursesHandler = async (req, res) => {
   let userSession = req.userSession
 
   let coursesList = []
+  const withEnrollments = req.query.with_enrollments == 'true'
+
   try {
 
-    console.log('userSession.user.role_id', userSession.user.role_id)
+    // console.log('userSession.user.role_id', userSession.user.role_id)
     if (userSession.user.role_id == 'admin') {
       // Get all course list with course.id, name, enabled, created_at, created_by_user.id, created_by_user.name
-
 
       const listCoursesQuery =
         ' SELECT `courses`.`course_id`, ' +
@@ -77,22 +75,52 @@ listCoursesHandler = async (req, res) => {
       let [courses] = await dbPool.execute(
         listCoursesQuery, []
       );
-      console.log(courses)
+
       if (courses.length > 0) {
+        let allEnrollments
+        if (withEnrollments) {
+          // Get all course ids 
+          let courseIDsList = []
+          for (let i = 0; i < courses.length; i++) {
+            courseIDsList.push(courses[i].course_id)
+          }
+
+          // Fetch all enrolled users in just a single query
+          allEnrollments = await coursesHelper.getCourseEnrollments(courseIDsList)
+        }
+
+
         for (let i = 0; i < courses.length; i++) {
           let course = courses[i];
           courseData = {
-            id: course.id,
+            id: course.course_id,
             name: course.name,
             enabled: !!course.enabled,
             created_by_user_id: course.created_by_user_id,
             created_by_user_name: course.created_by_user_name,
             created_at: course.created_at,
+            teachers: [],
+            students: []
           }
-          course.created_at = await commonHelper.msTimeToString(course.created_at)
-          coursesList.push(course)
+
+          if (withEnrollments) {
+            // Get all teachers and students enrolled in the course
+            if (typeof allEnrollments[courseData.id] != 'undefined') {
+              if (typeof allEnrollments[courseData.id].teachers != 'undefined') {
+                courseData.teachers = allEnrollments[courseData.id].teachers
+              }
+              if (typeof allEnrollments[courseData.id].students != 'undefined') {
+                courseData.students = allEnrollments[courseData.id].students
+              }
+            }
+          }
+
+          courseData.created_at = await commonHelper.msTimeToString(courseData.created_at)
+          coursesList.push(courseData)
         }
       }
+
+
 
     } else if (userSession.user.role_id == 'teacher') {
       // List all courses assigned to the teacher which are not disabled
@@ -110,49 +138,84 @@ listCoursesHandler = async (req, res) => {
         listCoursesQuery,
         [userSession.user.id]
       )
-      // console.log(courses)
+
 
       if (courses.length > 0) {
+        let allEnrollments;
+
+        if (withEnrollments) {
+
+          // Get all course ids
+          let courseIDsList = [];
+          for (let i = 0; i < courses.length; i++) {
+            courseIDsList.push(courses[i].course_id)
+          }
+
+          // Fetch all enrolled users in just a single query
+          allEnrollments = await coursesHelper.getCourseEnrollments(courseIDsList)
+          // console.log('allEnrollments123', allEnrollments)
+        }
+
         for (let i = 0; i < courses.length; i++) {
           let course = courses[i];
           courseData = {
-            id: course.id,
+            id: course.course_id,
             name: course.name,
             created_at: course.created_at,
+            students: []
           }
-          course.created_at = await commonHelper.msTimeToString(course.created_at)
-          coursesList.push(course)
+
+          if (withEnrollments) {
+            // Get all students enrolled in the course
+            if (typeof allEnrollments[courseData.id] != 'undefined') {
+              // if (typeof allEnrollments[courseData.id].teachers != 'undefined') {
+              //   courseData.teachers = allEnrollments[courseData.id].teachers
+              // }
+              if (typeof allEnrollments[courseData.id].students != 'undefined') {
+                courseData.students = allEnrollments[courseData.id].students
+              }
+            }
+          }
+
+
+          courseData.created_at = await commonHelper.msTimeToString(courseData.created_at)
+          coursesList.push(courseData)
         }
       }
     } else if (userSession.user.role_id == 'student') {
-      // List all the courses which are enabled and have at least 1 teacher assigned to them
 
-
+      // Selects enabled courses and checks if the user is enrolled in the course
+      // all in a single query using LEFT JOIN
       const listCoursesQuery =
-        // SELECT from user_courses table and join on courses table
-        ' SELECT `courses`.`course_id`, ' +
-        '   `courses`.`name`, ' +
-        // '   `courses`.`enabled`, ' +
-        '   `courses`.`created_at` ' +
-        ' FROM `courses` ' +
-        ' WHERE `courses`.`enabled` = 1 '
+        ' SELECT courses.course_id, ' +
+        '   courses.name, ' +
+        '   IF(user_courses.user_id IS NULL, false, true) AS enrolled, ' +
+        '    `courses`.`created_at` ' +
+        ' FROM courses ' +
+        '   LEFT JOIN user_courses ON courses.course_id = user_courses.course_id ' +
+        '   AND user_courses.user_id = ? ' +
+        ' WHERE courses.enabled = 1 ' +
+        ' ORDER BY `courses`.`created_at` DESC; '
+
+
 
       let [courses] = await dbPool.execute(
         listCoursesQuery,
         [userSession.user.id]
       )
-      // console.log(courses)
 
       if (courses.length > 0) {
         for (let i = 0; i < courses.length; i++) {
           let course = courses[i];
           courseData = {
-            id: course.id,
+            id: course.course_id,
             name: course.name,
+            enrolled: !!course.enrolled,
             created_at: course.created_at,
           }
-          course.created_at = await commonHelper.msTimeToString(course.created_at)
-          coursesList.push(course)
+
+          courseData.created_at = await commonHelper.msTimeToString(courseData.created_at)
+          coursesList.push(courseData)
         }
       }
 
@@ -174,18 +237,21 @@ listEnrollmentsHandler = async (req, res) => {
 disableCourseHandler = async (req, res) => {
 
   // Get course id from url parameters
-  let courseID = req.params.courseID
+  var [isInt, courseID] = commonHelper.isPositiveInteger(req.params.courseID)
+  if (!isInt) {
+    return res.status(400).json({ error: { message: 'Invalid course id provided' } })
+  }
 
   let courseInfo = await coursesHelper.getCourseInfo(courseID)
   if (typeof courseInfo.error != 'undefined') {
     return res.status(400).json(courseInfo)
   }
 
-
   if (!courseInfo.enabled) {
     return res.status(400).json({ error: { message: 'Course is already disabled' } })
   }
   try {
+
     // Disable course
     let [result] = await dbPool.execute(
       'UPDATE `courses` SET `enabled` = 0 WHERE `course_id` = ?',
@@ -209,9 +275,14 @@ disableCourseHandler = async (req, res) => {
     }
   })
 }
+
 enableCourseHandler = async (req, res) => {
+
   // Get course id from url parameters
-  let courseID = req.params.courseID
+  var [isInt, courseID] = commonHelper.isPositiveInteger(req.params.courseID)
+  if (!isInt) {
+    return res.status(400).json({ error: { message: 'Invalid course id provided' } })
+  }
 
   let courseInfo = await coursesHelper.getCourseInfo(courseID)
   if (typeof courseInfo.error != 'undefined') {
@@ -224,7 +295,16 @@ enableCourseHandler = async (req, res) => {
   }
 
   try {
-    // Enable course
+
+    // Check if any teacher role is assigned to the course id
+    let listTeacherEnrollments = await coursesHelper.getCourseEnrollments([courseID], null, ['teacher'])
+
+    // Only allow enabling course if at least one teacher is assigned to the course
+    if (Object.keys(listTeacherEnrollments).length < 1) {
+      return res.status(400).json({ error: { message: 'Cannot enable course as no teacher is assigned to the course' } })
+    }
+
+    // Enable the course
     let [result] = await dbPool.execute(
       'UPDATE `courses` SET `enabled` = 1 WHERE `course_id` = ?',
       [courseID]
@@ -235,6 +315,7 @@ enableCourseHandler = async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: { message: 'Error enabling course' } })
   }
+
   return res.json({
     data: {
       id: courseInfo.course_id,
@@ -358,6 +439,12 @@ unassignCourseHandler = async (req, res) => {
     return res.status(400).json({ error: { message: 'Incorrect role of the provided user_id, must be student' } })
   }
 
+
+  // TODO - Check if this teacher id is the only teacher assigned to the course
+  // then give error to disable the first before removing the last teacher
+  // or add another teacher first before removing the last teacher
+
+
   try {
     // Check if teacher is assigned to the course
     let [rows] = await dbPool.execute(
@@ -463,7 +550,7 @@ setMarksHandler = async (req, res) => {
 
   // Set marks for the student in the course
   try {
-    console.log(req.body.marks)
+    // console.log(req.body.marks)
     let [result] = await dbPool.execute(
       'UPDATE `user_courses` SET `marks` = ?, `marked_by_user_id` = ? WHERE `course_id` = ? AND `user_id` = ?',
       [req.body.marks, req.userSession.user.id, courseID, studentUserID]

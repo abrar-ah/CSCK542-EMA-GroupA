@@ -17,7 +17,6 @@ const getUserInfo = async (idType, idValue, withPassword) => {
     return { error: { message: 'Invalid input parameter idType' } }
   }
 
-  console.log(idType, idValue, withPassword)
   try {
 
     let selectFields = ['status', 'user_id', 'name', 'email', 'role_id', 'created_at']
@@ -30,10 +29,6 @@ const getUserInfo = async (idType, idValue, withPassword) => {
       sqlQuery,
       [idValue]
     )
-
-    console.log(sqlQuery)
-    console.log(rows)
-    console.log(idValue)
 
     if (rows.length < 1) {
       return { error: { message: 'Invalid ' + idType + ' provided, not found' } }

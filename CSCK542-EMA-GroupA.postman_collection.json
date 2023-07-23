@@ -173,13 +173,13 @@
 								"method": "PUT",
 								"header": [],
 								"url": {
-									"raw": "{{BASE_HOST}}/courses/5/enable",
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/enable",
 									"host": [
 										"{{BASE_HOST}}"
 									],
 									"path": [
 										"courses",
-										"5",
+										"{{courseID}}",
 										"enable"
 									]
 								}
@@ -192,13 +192,13 @@
 								"method": "PUT",
 								"header": [],
 								"url": {
-									"raw": "{{BASE_HOST}}/courses/5/disable",
+									"raw": "{{BASE_HOST}}/courses/{{courseID}}/disable",
 									"host": [
 										"{{BASE_HOST}}"
 									],
 									"path": [
 										"courses",
-										"5",
+										"{{courseID}}",
 										"disable"
 									]
 								}
@@ -212,7 +212,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"name\": \"Math course\",\r\n    \"enabled\": false\r\n}",
+									"raw": "{\r\n    \"name\": \"Math course\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -282,12 +282,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{BASE_HOST}}/courses",
+							"raw": "{{BASE_HOST}}/courses?with_enrollments=true",
 							"host": [
 								"{{BASE_HOST}}"
 							],
 							"path": [
 								"courses"
+							],
+							"query": [
+								{
+									"key": "with_enrollments",
+									"value": "true",
+									"description": "This is optional and shows the enrolled teachers/students for admins and enrolled students for teachers"
+								}
 							]
 						}
 					},

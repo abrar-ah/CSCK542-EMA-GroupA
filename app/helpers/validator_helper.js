@@ -40,22 +40,23 @@ const nameStringSchema = {
   maxLength: 64 // We want the name field to be not too long
 }
 
-const enabledBooleanSchema = {
-  $async: true,
-  type: 'boolean',
-  errorMessage: 'Invalid enabled parameter'
-}
+// const enabledBooleanSchema = {
+//   $async: true,
+//   type: 'boolean',
+//   errorMessage: 'Invalid enabled parameter'
+// }
 
 const createCourseSchema = {
   $async: true,
   type: 'object',
   properties: {
     name: nameStringSchema,
-    enabled: enabledBooleanSchema
+    // enabled: enabledBooleanSchema
   },
   required: ['name'],
   additionalProperties: false
 }
+
 
 const tableIDNumberSchema = {
   $async: true,
